@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/effel/media-tracker/models"
 	"github.com/effel/media-tracker/storage"
@@ -15,6 +16,15 @@ func BooksHandler(w http.ResponseWriter, r *http.Request) {
 		handleGetBooks(w, r)
 	case http.MethodPost:
 		handlePostBooks(w, r)
+	default:
+		http.Error(w, "Method not allowed.\n", http.StatusMethodNotAllowed)
+	}
+}
+
+func BooksByIDHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		handleGetBooksByID(w, r)
 	default:
 		http.Error(w, "Method not allowed.\n", http.StatusMethodNotAllowed)
 	}
@@ -54,4 +64,28 @@ func handleGetBooks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
+}
+
+func handleGetBooksByID(w http.ResponseWriter, r *http.Request) {
+	idParam := r.URL.Query().Get("id")
+	if idParam != "" {
+		id, err := strconv.Atoi(idParam)
+		if err != nil {
+			http.Error(w, "Invalid ID", http.StatusBadRequest)
+			return
+		}
+
+		book, found := storage.GetBookByID(id)
+		if !found {
+			http.Error(w, "Book not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(book)
+		return
+	}else {
+		http.Error(w, "Invalid Parameter", http.StatusBadRequest)
+		return
+	}
 }

@@ -11,5 +11,6 @@ func main() {
 	fmt.Printf("Server is starting now...")
 	http.HandleFunc("/", handlers.HomeHandler)
 	http.HandleFunc("/books", handlers.BooksHandler)
+	http.HandleFunc("/books/", handlers.BooksByIDHandler)
 	http.ListenAndServe(":8080", nil)
 }
