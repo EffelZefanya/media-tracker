@@ -22,13 +22,24 @@ func BooksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func BooksByIDHandler(w http.ResponseWriter, r *http.Request) {
+	// Expected path: /books/{id}
+	idStr := r.URL.Path[len("/books/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid book ID", http.StatusBadRequest)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		handleGetBooksByID(w, r)
+		handleGetBooksByID(w, r, id)
+	case http.MethodDelete:
+		handleDeleteBooksByID(w, r, id)
 	default:
 		http.Error(w, "Method not allowed.\n", http.StatusMethodNotAllowed)
 	}
 }
+
 
 func handlePostBooks(w http.ResponseWriter, r *http.Request) {
 	var newBook models.Book
@@ -66,26 +77,24 @@ func handleGetBooks(w http.ResponseWriter, r *http.Request) {
 	w.Write(jsonData)
 }
 
-func handleGetBooksByID(w http.ResponseWriter, r *http.Request) {
-	idParam := r.URL.Query().Get("id")
-	if idParam != "" {
-		id, err := strconv.Atoi(idParam)
-		if err != nil {
-			http.Error(w, "Invalid ID", http.StatusBadRequest)
-			return
-		}
-
-		book, found := storage.GetBookByID(id)
-		if !found {
-			http.Error(w, "Book not found", http.StatusNotFound)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(book)
-		return
-	}else {
-		http.Error(w, "Invalid Parameter", http.StatusBadRequest)
+func handleDeleteBooksByID(w http.ResponseWriter, r *http.Request, id int) {
+	deleted := storage.DeleteBookByID(id)
+	if !deleted {
+		http.Error(w, "Book not found", http.StatusNotFound)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
 }
+
+
+func handleGetBooksByID(w http.ResponseWriter, r *http.Request, id int) {
+	book, found := storage.GetBookByID(id)
+	if !found {
+		http.Error(w, "Book not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(book)
+}
+

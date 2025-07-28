@@ -24,3 +24,13 @@ func GetBookByID(id int) (*models.Book, bool){
 	}
 	return nil, false
 }
+
+func DeleteBookByID(id int)(bool){
+	for i, book := range books{
+		if book.ID == id{
+			books = append(books[:i], books[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
